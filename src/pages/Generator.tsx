@@ -7,6 +7,14 @@ import { Button } from "@/components/ios-ui/Button";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, FilePlus } from "lucide-react";
 
+// Utility untuk menambah nota ke localStorage
+function addNoteToLocalStorage(type: 'request' | 'receipt', note: any) {
+  const key = type === 'request' ? 'invoices' : 'receipts';
+  const current = JSON.parse(localStorage.getItem(key) || '[]');
+  current.unshift(note); // urutan terbaru di atas
+  localStorage.setItem(key, JSON.stringify(current));
+}
+
 export default function Generator() {
   const [activeTab, setActiveTab] = useState<'request' | 'receipt'>('request');
   const [clientName, setClientName] = useState("");
@@ -93,13 +101,36 @@ export default function Generator() {
     if (!validateForm()) {
       return;
     }
-    
     setIsLoading(true);
 
-    // For demo purposes - simulate creating an invoice/receipt
+    // STRUKTUR DATA NOTA (bisa di-extend sesuai kebutuhan)
+    const noteData =
+      activeTab === "request"
+        ? {
+            id: Date.now(),
+            client: clientName,
+            description,
+            amount,
+            dueDate,
+            status: "menunggu", // default status untuk permintaan
+            paymentMethod,
+            issuedDate: new Date().toLocaleDateString("id-ID"),
+          }
+        : {
+            id: Date.now(),
+            client: clientName,
+            description,
+            amount,
+            receiptDate: dueDate,
+            paymentMethod,
+          };
+
     setTimeout(() => {
       setIsLoading(false);
-      
+
+      // Simpan ke localStorage
+      addNoteToLocalStorage(activeTab, noteData);
+
       // Success message
       toast({
         title: activeTab === 'request' ? 'Nota Permintaan Dibuat' : 'Nota Penerimaan Dibuat',
@@ -108,7 +139,7 @@ export default function Generator() {
           : `Penerimaan pembayaran dari ${clientName} telah dicatat`,
         variant: "default",
       });
-      
+
       // Reset form
       setClientName("");
       setDescription("");
