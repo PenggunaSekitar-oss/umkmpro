@@ -18,6 +18,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['"SF Pro Display"', '"SF Pro"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+				mono: ['"SF Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -51,6 +55,21 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				ios: {
+					blue: '#007AFF',
+					red: '#FF3B30',
+					green: '#34C759',
+					yellow: '#FFCC00',
+					orange: '#FF9500',
+					gray: {
+						100: '#F2F2F7',
+						200: '#E5E5EA',
+						300: '#D1D1D6',
+						400: '#C7C7CC',
+						500: '#AEAEB2',
+						600: '#8E8E93',
+					},
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
