@@ -22,8 +22,15 @@ export default function Signup() {
     // In production, you would make an API call to create an account
     setTimeout(() => {
       setIsLoading(false);
-      // For demo, we'll just accept any signup
+      
+      // Store user data in localStorage
       localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userData", JSON.stringify({
+        name,
+        email,
+        registeredAt: new Date().toISOString()
+      }));
+      
       toast({
         title: "Akun berhasil dibuat",
         description: "Selamat bergabung!"

@@ -1,25 +1,96 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ios-ui/Card";
 import { ArrowUpRight, ArrowDownRight, Clock, TrendingUp } from "lucide-react";
 
 export default function Dashboard() {
-  // Mock data for demo purposes
-  const stats = {
-    unpaidInvoices: 4,
-    paidInvoices: 12,
-    totalPending: "Rp 7.850.000",
-    totalReceived: "Rp 32.400.000",
+  const [stats, setStats] = useState({
+    unpaidInvoices: 0,
+    paidInvoices: 0,
+    totalPending: "Rp 0",
+    totalReceived: "Rp 0",
+  });
+
+  const [recentActivity, setRecentActivity] = useState([]);
+
+  // Format currency function
+  const formatCurrency = (amount) => {
+    if (!amount) return "Rp 0";
+    
+    // If amount is already formatted (starts with Rp), return as is
+    if (typeof amount === 'string' && amount.startsWith('Rp')) {
+      return amount;
+    }
+    
+    // Otherwise format the number
+    const numeric = Number(amount);
+    return `Rp ${numeric.toLocaleString('id-ID').replace(/,/g, '.')}`;
   };
 
-  // Mock recent activity
-  const recentActivity = [
-    { id: 1, client: "PT Maju Jaya", amount: "Rp 2.500.000", status: "Dibayar", date: "23 Apr 2025" },
-    { id: 2, client: "CV Sentosa", amount: "Rp 1.750.000", status: "Menunggu", date: "21 Apr 2025" },
-    { id: 3, client: "Toko Bahagia", amount: "Rp 3.600.000", status: "Dibayar", date: "18 Apr 2025" },
-    { id: 4, client: "PT Sukses Abadi", amount: "Rp 2.100.000", status: "Jatuh Tempo", date: "15 Apr 2025" },
-  ];
+  // Load real data from localStorage
+  useEffect(() => {
+    // Get invoices and receipts from localStorage
+    const invoices = JSON.parse(localStorage.getItem("invoices") || "[]");
+    const receipts = JSON.parse(localStorage.getItem("receipts") || "[]");
+    
+    // Calculate statistics
+    const unpaidInvoices = invoices.filter(inv => inv.status !== "dibayar").length;
+    const paidInvoices = invoices.filter(inv => inv.status === "dibayar").length + receipts.length;
+    
+    // Calculate total amounts
+    let totalPending = 0;
+    let totalReceived = 0;
+    
+    invoices.forEach(inv => {
+      const amount = Number(inv.amount.replace(/[^0-9]/g, ""));
+      if (inv.status !== "dibayar") {
+        totalPending += amount;
+      } else {
+        totalReceived += amount;
+      }
+    });
+    
+    receipts.forEach(rec => {
+      const amount = Number(rec.amount.replace(/[^0-9]/g, ""));
+      totalReceived += amount;
+    });
+    
+    // Update stats
+    setStats({
+      unpaidInvoices,
+      paidInvoices,
+      totalPending: formatCurrency(totalPending),
+      totalReceived: formatCurrency(totalReceived),
+    });
+    
+    // Combine and sort recent activity
+    const combinedActivity = [
+      ...invoices.map(inv => ({
+        id: inv.id,
+        client: inv.client,
+        amount: inv.amount,
+        status: inv.status === "menunggu" ? "Menunggu" : 
+                inv.status === "jatuhTempo" ? "Jatuh Tempo" : "Dibayar",
+        date: inv.issuedDate || new Date(inv.id).toLocaleDateString('id-ID'),
+        timestamp: inv.id
+      })),
+      ...receipts.map(rec => ({
+        id: rec.id,
+        client: rec.client,
+        amount: rec.amount,
+        status: "Dibayar",
+        date: rec.receiptDate || new Date(rec.id).toLocaleDateString('id-ID'),
+        timestamp: rec.id
+      }))
+    ];
+    
+    // Sort by timestamp (newest first) and take the first 5
+    const sortedActivity = combinedActivity
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 5);
+    
+    setRecentActivity(sortedActivity);
+  }, []);
 
   return (
     <AppLayout title="Dashboard" activeRoute="dashboard">
@@ -99,26 +170,32 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivity.map((item) => (
-                <div key={item.id} className="flex items-center justify-between border-b border-ios-gray-200 pb-4 last:border-0 last:pb-0">
-                  <div>
-                    <div className="font-medium">{item.client}</div>
-                    <div className="text-sm text-ios-gray-600">{item.date}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium">{item.amount}</div>
-                    <div className={`text-sm ${
-                      item.status === "Dibayar" 
-                        ? "text-ios-green" 
-                        : item.status === "Jatuh Tempo" 
-                          ? "text-ios-red" 
-                          : "text-ios-yellow"
-                    }`}>
-                      {item.status}
+              {recentActivity.length > 0 ? (
+                recentActivity.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between border-b border-ios-gray-200 pb-4 last:border-0 last:pb-0">
+                    <div>
+                      <div className="font-medium">{item.client}</div>
+                      <div className="text-sm text-ios-gray-600">{item.date}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{item.amount}</div>
+                      <div className={`text-sm ${
+                        item.status === "Dibayar" 
+                          ? "text-ios-green" 
+                          : item.status === "Jatuh Tempo" 
+                            ? "text-ios-red" 
+                            : "text-ios-yellow"
+                      }`}>
+                        {item.status}
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-ios-gray-600">Belum ada aktivitas</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
