@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ios-ui/Card";
 import { Search, Download, Share, MoreHorizontal } from "lucide-react";
@@ -7,47 +7,22 @@ import { Input } from "@/components/ios-ui/Input";
 
 export default function Receipts() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [receipts, setReceipts] = useState<any[]>([]);
 
-  // Mock receipt data for demo purposes
-  const receipts = [
-    {
-      id: 1,
-      client: "PT Maju Jaya",
-      amount: "Rp 4.500.000",
-      description: "Pembayaran Jasa Konsultasi",
-      receiptDate: "20/04/2025",
-      paymentMethod: "Transfer Bank",
-    },
-    {
-      id: 2,
-      client: "Toko Bahagia",
-      amount: "Rp 3.600.000",
-      description: "Pembayaran Website E-commerce",
-      receiptDate: "18/04/2025",
-      paymentMethod: "E-wallet",
-    },
-    {
-      id: 3,
-      client: "PT Bintang Terang",
-      amount: "Rp 3.200.000",
-      description: "Pembayaran Jasa Fotografi",
-      receiptDate: "15/04/2025",
-      paymentMethod: "Transfer Bank",
-    },
-    {
-      id: 4,
-      client: "CV Prima Utama",
-      amount: "Rp 2.750.000",
-      description: "Pembayaran Desain Logo",
-      receiptDate: "10/04/2025",
-      paymentMethod: "Tunai",
-    },
-  ];
+  // Ambil receipts dari localStorage ketika komponen dirender
+  useEffect(() => {
+    const stored = localStorage.getItem("receipts");
+    if (stored) {
+      setReceipts(JSON.parse(stored));
+    } else {
+      setReceipts([]);
+    }
+  }, []);
 
-  // Filter receipts based on search
+  // Filter receipts berdasarkan search
   const filteredReceipts = receipts.filter((receipt) => {
-    return receipt.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      receipt.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return (receipt.client || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (receipt.description || "").toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   return (
@@ -84,7 +59,7 @@ export default function Receipts() {
                           Lunas
                         </span>
                         <span className="text-xs text-ios-gray-600">
-                          Tanggal: {receipt.receiptDate}
+                          Tanggal: {receipt.receiptDate || "-"}
                         </span>
                       </div>
                     </div>

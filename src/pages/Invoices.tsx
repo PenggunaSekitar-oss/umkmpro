@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ios-ui/Card";
 import { Search, Filter, Download, Share, MoreHorizontal } from "lucide-react";
@@ -9,64 +9,34 @@ import { Button } from "@/components/ios-ui/Button";
 export default function Invoices() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
+  const [invoices, setInvoices] = useState<any[]>([]);
 
-  // Mock invoice data for demo purposes
-  const invoices = [
-    {
-      id: 1,
-      client: "PT Maju Jaya",
-      amount: "Rp 2.500.000",
-      description: "Jasa Desain Website",
-      dueDate: "30/04/2025",
-      status: "menunggu",
-      issuedDate: "16/04/2025",
-    },
-    {
-      id: 2,
-      client: "CV Sentosa",
-      amount: "Rp 1.750.000",
-      description: "Konsultasi Marketing",
-      dueDate: "28/04/2025",
-      status: "menunggu",
-      issuedDate: "14/04/2025",
-    },
-    {
-      id: 3,
-      client: "PT Sukses Abadi",
-      amount: "Rp 2.100.000",
-      description: "Pengembangan Aplikasi Mobile",
-      dueDate: "15/04/2025",
-      status: "jatuhTempo",
-      issuedDate: "01/04/2025",
-    },
-    {
-      id: 4,
-      client: "PT Bintang Terang",
-      amount: "Rp 3.200.000",
-      description: "Jasa Fotografi Produk",
-      dueDate: "25/04/2025",
-      status: "dibayar",
-      issuedDate: "10/04/2025",
-      paidDate: "15/04/2025",
-    },
-  ];
+  // Ambil invoice dari localStorage saat komponen dirender
+  useEffect(() => {
+    const stored = localStorage.getItem("invoices");
+    if (stored) {
+      setInvoices(JSON.parse(stored));
+    } else {
+      setInvoices([]);
+    }
+  }, []);
 
-  // Filter invoices based on search and status filter
+  // Filter invoices berdasarkan search dan status
   const filteredInvoices = invoices.filter((invoice) => {
-    const matchesSearch = 
-      invoice.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilter = 
-      filter === "all" || 
+    const matchesSearch =
+      (invoice.client || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (invoice.description || "").toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesFilter =
+      filter === "all" ||
       (filter === "menunggu" && invoice.status === "menunggu") ||
       (filter === "jatuhTempo" && invoice.status === "jatuhTempo") ||
       (filter === "dibayar" && invoice.status === "dibayar");
-    
+
     return matchesSearch && matchesFilter;
   });
 
-  // Get status badge styling
+  // Styling badge status
   const getStatusBadge = (status: string) => {
     switch(status) {
       case "menunggu":
@@ -80,7 +50,6 @@ export default function Invoices() {
     }
   };
 
-  // Get status text
   const getStatusText = (status: string) => {
     switch(status) {
       case "menunggu":
@@ -97,7 +66,7 @@ export default function Invoices() {
   return (
     <AppLayout title="Permintaan Pembayaran" activeRoute="invoices">
       <div className="space-y-6">
-        {/* Search and Filter */}
+        {/* Search dan Filter */}
         <div className="flex flex-col gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-ios-gray-500" />
@@ -152,7 +121,8 @@ export default function Invoices() {
                 <div className={`h-1 w-full ${
                   invoice.status === "menunggu" ? "bg-ios-yellow" :
                   invoice.status === "jatuhTempo" ? "bg-ios-red" :
-                  "bg-ios-green"
+                  invoice.status === "dibayar" ? "bg-ios-green" :
+                  "bg-ios-gray-300"
                 }`} />
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
@@ -164,7 +134,7 @@ export default function Invoices() {
                           {getStatusText(invoice.status)}
                         </span>
                         <span className="text-xs text-ios-gray-600">
-                          Jatuh tempo: {invoice.dueDate}
+                          Jatuh tempo: {invoice.dueDate || "-"}
                         </span>
                       </div>
                     </div>
